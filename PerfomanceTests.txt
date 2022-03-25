@@ -1,0 +1,483 @@
+Notes, map:
+ifstream: 1 336 0.001
+ifstream char buffer: 2 327 0
+ifstream vector buffer:3 336 0.014
+ifstream reserve vector buffer:4 336 0
+ifstream getc:6 336 0
+memory map rw: 7 336 0
+memory map r: 7 read 336 0
+memory map r chunks: 7.1 336 0.006(perf with a lot of cout)
+
+memory map -> best perfomance
+memory map read -> slightly faster than rw 
+
+// debug:
+// 1 336 0.001, 2 327 0, 3 336 0.014, 4 336 0, 6 336 0, 7 336 0, 7 read 336 0, 7.1 306(296)(wrong ans) 0.006(perf with a lot of cout)
+// file size perf 0.001
+// 1 3495084 0.566, 2 0 0.105, 3 3495084(0 index only correct) 3.46, 4 3495084 4.354, 6 3495084 0.44, 7 3495084 0.178, 7 read 3495084 0.181, 7.1 err
+
+// debug:
+// 1 336 0.025, 327 0.001, 336 0.003, 4 336 0.01, 6 336 0,7 336 0, 7 read 336 0, 326(327) 0.015
+// 1 3495084 6.043, 2 0 0.11, 3 3495084(3495085) 4.109, 4 3495084 4.811, 6 3495084 0.474, 7 3495084 0.221, 7 r 3495084 0.198, 7.1 3204815(3180126) 0.77
+// 1 34948409 34.747, 2 0, 3 34948409(34948410) 77.227, 4 34948409 45.8566, 6 634948409 4.37125, 7 34948409 1.784, 7 r 34948409 1.856, 7.1 28353750(27879777) 8.44648
+
+// debug:
+// 1 336 0.028, 2 327 0.001, 3 336 0.003, 4 336 0.01, 6 336 0,7 336 0, 7 read 336 0.01, 336 0.014
+// 1 3495084 6.043(1.512), 2 0 0.11(0.106), 3 3495084(3495085,85) 4.109, 4 3495084 4.811(4.385), 6 3495084 0.474(0.429), 7 3495084 0.221(0.178), 7 r 3495084 0.198(0.177), 7.1 3495084(3180126 before fix) 0.77(0.507)
+// 1 34948409 34.747(7.019), 2 0(1.076), 3 34948409(34948410) 77.227(35.035), 4 34948409 45.8566(44.1005), 6 634948409 4.37125(4.577), 7 34948409 1.784(2.01112), 7 r 34948409 1.856(1.788), 7.1 28353750(27879777) 8.44648(4.99829)
+
+
+1 /* Test process textfile 5 txt about 1mb */
+2 lines in 1.txt(10+mb):
+3 lines in 100.txt(100+mb):
+
+// release:
+// 1 336 0.001, 2 123 0.001, 3 336 0.011, 4 336 0, 6 336 0, 7 336 0(0.001,0), 7 read 336 0.01(0), 336 0.013(0.009 0 0)
+// 1 3495084 0.394, 2 0 0.014, 3 3495084(3495085,85) 0.164, 4 3495084 0.167, 6 3495084 3.723, 7 3495084 0.113(0.011 0.011 0.011 0.012 0.01), 7 r 3495084 0.011(0.011 0.014 0.012 0.011 0.011), 7.1 3495084 0.028(1.56 1.425 0.017 0.019 0.019)
+// 1 34948409 3.902, 2 0 0.145, 3 34948409 1.713, 4 34948409 1.614, 6 634948409 4.37125(4.577), 7 34948409 1.784(2.01112)(0.113 0.111 0.123 0.118 0.111 0.112), 7 r 34948409 0.111(0.111 0.114 0.11 0.114 0.113 0.11), 7.1 34948409 0.172(15.21 14.99 0.169 0.164 0.17 0.167)
+
+1 file size about 0.01
+2 file size about 0.01, vectorized -> 0.148
+3 file size about 0.01, vectorized -> 1.565
+
+2 lc from buf :0
+perf :0.145008
+textdata[i] :
+textdata[i] :
+
+
+textdata[i] :13
+textdata[i] :10
+
+3 lc from vec :34948409
+lcountint from vec :34948409
+lcountint 2 from vec :34948409
+perf :1.7131
+4 lc from reserve vec :34948409
+perf :1.61409
+5 Number of lines in text file from C: 39608690
+5 lc from C: 104857600
+lc int from C: 104857600
+6 lc getc test2 :34948409
+perf :3.72321
+7 lc mmap1 :34948409
+perf :0.113006
+7 read lc mmap1r :34948409
+perf :0.111006
+7.1 mmapfilesize :139806009
+7.1 lc mmapchunksize :46602003
+7.1 mmaplowerbound :0
+
+7.1 mmapupperbound :46602003
+
+7.1 loop indx :0
+
+7.1 mmaplowerbound :46602003
+
+7.1 mmapupperbound :93204006
+
+7.1 loop indx :1
+
+7.1 mmaplowerbound :93204006
+
+7.1 mmapupperbound :139806008
+
+7.1 loop indx :2
+
+7.1 CalcLinesInTextFiles :0
+7.1 lc chunks mmap :34948409
+7.1 lc chunks mmap int :34948409
+7.1 CharsinMaps :139806009
+perf :0.17201
+
+
+//////////
+
+
+///large, why file -> need chunk
+task  t.file.Path: D:\Cpp\LinesInTextFiles\build\TextFiles1\1.txt
+task  t.file.size: 1715481
+task  t.file.type: l
+task  t.type: f
+task  t.lc: 428603
+task  t.lowerbound: 0
+task  t.chunksize: 0
+//
+
+/// l: c and f-> c, c
+/// 1c: 0 1325722 2f: 0 0 -> more than size
+task  t.file.Path: D:\Cpp\LinesInTextFiles\build\TextFiles1\2.txt
+task  t.file.size: 2651445
+task  t.file.type: l
+task  t.type: c
+task  t.lc: 663467
+task  t.lowerbound: 0
+task  t.chunksize: 1325722
+
+task  t.file.Path: D:\Cpp\LinesInTextFiles\build\TextFiles1\2.txt
+task  t.file.size: 2651445
+task  t.file.type: l
+task  t.type: f
+task  t.lc: 663467
+task  t.lowerbound: 0
+task  t.chunksize: 0
+//
+
+///large, why file -> need chunk
+task  t.file.Path: D:\Cpp\LinesInTextFiles\build\TextFiles1\3.txt
+task  t.file.size: 1623359
+task  t.file.type: l
+task  t.type: f
+task  t.lc: 406264
+task  t.lowerbound: 0
+task  t.chunksize: 0
+//
+
+                
+///large, why file -> need chunk
+task  t.file.Path: D:\Cpp\LinesInTextFiles\build\TextFiles1\5.txt
+task  t.file.size: 1382166
+task  t.file.type: l
+task  t.type: f
+task  t.lc: 345643
+task  t.lowerbound: 0
+task  t.chunksize: 0
+//
+
+
+
+/////
+
+
+
+
+
+/// lc -> same for 2 task -> its lc for whole file  -> 2x file lc for 2 chunks
+task  t.file.Path: D:\Cpp\LinesInTextFiles\build\TextFiles1\5.txt
+task  t.file.size: 2514167
+task  t.file.type: l
+task  t.type: c
+task  t.lc: 629189
+task  t.lowerbound: 0
+task  t.chunksize: 1257083
+D:\Cpp\LinesInTextFiles\build\TextFiles1\5.txt
+7.2 mmap funct read :629189
+
+task  t.file.Path: D:\Cpp\LinesInTextFiles\build\TextFiles1\5.txt
+task  t.file.size: 2514167
+task  t.file.type: l
+task  t.type: c
+task  t.lc: 629189
+task  t.lowerbound: 1257083
+task  t.chunksize: 0
+D:\Cpp\LinesInTextFiles\build\TextFiles1\5.txt
+7.2 mmap funct read :629189
+//
+
+
+/// lc -> same for 2 task -> its lc for whole file  -> 2x file lc for 2 chunks
+task  t.file.Path: D:\Cpp\LinesInTextFiles\build\TextFiles1\8.txt
+task  t.file.size: 2341732
+task  t.file.type: l
+task  t.type: c
+task  t.lc: 585572
+task  t.lowerbound: 0
+task  t.chunksize: 1170866
+D:\Cpp\LinesInTextFiles\build\TextFiles1\8.txt
+7.2 mmap funct read :585572
+
+task  t.file.Path: D:\Cpp\LinesInTextFiles\build\TextFiles1\8.txt
+task  t.file.size: 2341732
+task  t.file.type: l
+task  t.type: c
+task  t.lc: 585572
+task  t.lowerbound: 1170866
+task  t.chunksize: 0
+D:\Cpp\LinesInTextFiles\build\TextFiles1\8.txt
+7.2 mmap funct read :585572
+//
+
+
+
+
+/////////
+
+
+
+/// large file chunk process like whole file ->>> one chunk, need at least 2+ (1653>1024) -> for loop(i)
+/// need to rond to large num-> 2+ to 3
+task  t.file.Path: D:\Cpp\LinesInTextFiles\build\TextFiles1\0.txt
+task  t.file.size: 1653427
+task  t.file.type: l
+task  t.type: c
+task  t.lc: 414287
+task  t.lowerbound: 0
+task  t.chunksize: 0
+D:\Cpp\LinesInTextFiles\build\TextFiles1\0.txt
+7.2 mmap funct read :414287
+//
+
+
+
+float mmappartsf = f.size / OneChunkSize; // / 1024; //num of chunks
+unsigned int mmapparts = std::ceil(mmappartsf); // / 1024; //num of chunks
+
+/////
+
+float mmappartsf = f.size / BaseChunkSize; // / 1024; //num of chunks
+unsigned int mmapparts = std::ceil(mmappartsf); // / 1024; //num of chunks
+
+to get n chunks of size BaseChunkSize and one chunk with size FileSize-(BaseChunkSize*n)
+
+if BaseChunkSize == 1024
+float mmappartsf = f.size / BaseChunkSize; // / 1024; //num of chunks
+
+need to reprecent as float(doible):
+uint64_t mmapchunksize = f.size / mmapparts;
+
+OR Just use fixed BaseChunkSize
+set loop indx by std::ceil(mmappartsf)(typically is i+1 OR i size)
+and on loop index i-1 where i<std::ceil(mmappartsf)
+set mmap mmapchunksize*i mio::whole_mmap
+
+
+/////
+
+"D:\\Cpp\\LinesInTextFiles\\build\\TextFiles1\\0.txt"
+7.2 mmap funct read :552606
+perf :0.0710041
+"D:\\Cpp\\LinesInTextFiles\\build\\TextFiles1\\0.txt"
+"D:\\Cpp\\LinesInTextFiles\\build\\TextFiles1\\1.txt"
+7.2 mmap funct read :311031
+perf :0.0210012
+"D:\\Cpp\\LinesInTextFiles\\build\\TextFiles1\\1.txt"
+"D:\\Cpp\\LinesInTextFiles\\build\\TextFiles1\\2.txt"
+7.2 mmap funct read :312405
+perf :0.0160009
+"D:\\Cpp\\LinesInTextFiles\\build\\TextFiles1\\2.txt"
+"D:\\Cpp\\LinesInTextFiles\\build\\TextFiles1\\3.txt"
+7.2 mmap funct read :392168
+perf :0.0210012
+"D:\\Cpp\\LinesInTextFiles\\build\\TextFiles1\\3.txt"
+"D:\\Cpp\\LinesInTextFiles\\build\\TextFiles1\\4.txt"
+7.2 mmap funct read :353
+perf :0
+"D:\\Cpp\\LinesInTextFiles\\build\\TextFiles1\\4.txt"
+"D:\\Cpp\\LinesInTextFiles\\build\\TextFiles1\\5.txt"
+7.2 mmap funct read :206367
+perf :0.0110007
+"D:\\Cpp\\LinesInTextFiles\\build\\TextFiles1\\5.txt"
+"D:\\Cpp\\LinesInTextFiles\\build\\TextFiles1\\6.txt"
+7.2 mmap funct read :466173
+perf :0.0250015
+"D:\\Cpp\\LinesInTextFiles\\build\\TextFiles1\\6.txt"
+"D:\\Cpp\\LinesInTextFiles\\build\\TextFiles1\\7.txt"
+7.2 mmap funct read :313948
+perf :0.127007
+"D:\\Cpp\\LinesInTextFiles\\build\\TextFiles1\\7.txt"
+"D:\\Cpp\\LinesInTextFiles\\build\\TextFiles1\\8.txt"
+7.2 mmap funct read :136971
+perf :0.0100005
+"D:\\Cpp\\LinesInTextFiles\\build\\TextFiles1\\8.txt"
+"D:\\Cpp\\LinesInTextFiles\\build\\TextFiles1\\9.txt"
+7.2 mmap funct read :632351
+perf :0.162009
+"D:\\Cpp\\LinesInTextFiles\\build\\TextFiles1\\9.txt"
+files in TextFiles1: D:\Cpp\LinesInTextFiles\build\TextFiles1
+D:\Cpp\LinesInTextFiles\build\TextFiles1\0.txt
+7.2 mmap funct read :552606
+perf :0.149009
+D:\Cpp\LinesInTextFiles\build\TextFiles1\1.txt
+7.2 mmap funct read :311031
+perf :0.0290017
+D:\Cpp\LinesInTextFiles\build\TextFiles1\2.txt
+7.2 mmap funct read :312405
+perf :0.016001
+D:\Cpp\LinesInTextFiles\build\TextFiles1\3.txt
+7.2 mmap funct read :392168
+perf :0.0310018
+D:\Cpp\LinesInTextFiles\build\TextFiles1\4.txt
+7.2 mmap funct read :353
+perf :0.0010001
+D:\Cpp\LinesInTextFiles\build\TextFiles1\5.txt
+7.2 mmap funct read :206367
+perf :0.0110007
+D:\Cpp\LinesInTextFiles\build\TextFiles1\6.txt
+7.2 mmap funct read :466173
+perf :0.0610035
+D:\Cpp\LinesInTextFiles\build\TextFiles1\7.txt
+7.2 mmap funct read :313948
+perf :0.0370021
+D:\Cpp\LinesInTextFiles\build\TextFiles1\8.txt
+7.2 mmap funct read :136971
+perf :0.0070004
+D:\Cpp\LinesInTextFiles\build\TextFiles1\9.txt
+7.2 mmap funct read :632351
+perf :0.035002
+globallinecounter : 3324373
+
+task  t.file.Path: D:\Cpp\LinesInTextFiles\build\TextFiles1\0.txt
+task  t.file.size: 2209538
+task  t.file.type: l
+task  t.type: c
+task  t.lc: 184508
+task  t.lowerbound: 0
+task  t.chunksize: 736512
+
+
+D:\Cpp\LinesInTextFiles\build\TextFiles1\0.txt
+7.2 mmap funct read :552606
+
+
+
+
+
+task  t.file.Path: D:\Cpp\LinesInTextFiles\build\TextFiles1\0.txt
+task  t.file.size: 2209538
+task  t.file.type: l
+task  t.type: c
+task  t.lc: 184351
+task  t.lowerbound: 736512
+task  t.chunksize: 736512
+
+task  t.file.Path: D:\Cpp\LinesInTextFiles\build\TextFiles1\0.txt
+task  t.file.size: 2209538
+task  t.file.type: l
+task  t.type: c
+task  t.lc: 183747
+task  t.lowerbound: 1473024
+task  t.chunksize: 0
+
+task  t.file.Path: D:\Cpp\LinesInTextFiles\build\TextFiles1\1.txt
+task  t.file.size: 1242491
+task  t.file.type: l
+task  t.type: c
+task  t.lc: 155234
+task  t.lowerbound: 0
+task  t.chunksize: 621245
+
+task  t.file.Path: D:\Cpp\LinesInTextFiles\build\TextFiles1\1.txt
+task  t.file.size: 1242491
+task  t.file.type: l
+task  t.type: c
+task  t.lc: 155797
+task  t.lowerbound: 621245
+task  t.chunksize: 0
+
+task  t.file.Path: D:\Cpp\LinesInTextFiles\build\TextFiles1\2.txt
+task  t.file.size: 1249944
+task  t.file.type: l
+task  t.type: c
+task  t.lc: 156275
+task  t.lowerbound: 0
+task  t.chunksize: 624972
+
+task  t.file.Path: D:\Cpp\LinesInTextFiles\build\TextFiles1\2.txt
+task  t.file.size: 1249944
+task  t.file.type: l
+task  t.type: c
+task  t.lc: 156130
+task  t.lowerbound: 624972
+task  t.chunksize: 0
+
+task  t.file.Path: D:\Cpp\LinesInTextFiles\build\TextFiles1\3.txt
+task  t.file.size: 1571621
+task  t.file.type: l
+task  t.type: c
+task  t.lc: 196041
+task  t.lowerbound: 0
+task  t.chunksize: 785810
+
+task  t.file.Path: D:\Cpp\LinesInTextFiles\build\TextFiles1\3.txt
+task  t.file.size: 1571621
+task  t.file.type: l
+task  t.type: c
+task  t.lc: 196127
+task  t.lowerbound: 785810
+task  t.chunksize: 0
+
+task  t.file.Path: D:\Cpp\LinesInTextFiles\build\TextFiles1\4.txt
+task  t.file.size: 1377
+task  t.file.type: s
+task  t.type: f
+task  t.lc: 353
+task  t.lowerbound: 0
+task  t.chunksize: 0
+
+task  t.file.Path: D:\Cpp\LinesInTextFiles\build\TextFiles1\5.txt
+task  t.file.size: 825457
+task  t.file.type: s
+task  t.type: f
+task  t.lc: 206367
+task  t.lowerbound: 0
+task  t.chunksize: 0
+
+task  t.file.Path: D:\Cpp\LinesInTextFiles\build\TextFiles1\6.txt
+task  t.file.size: 1865497
+task  t.file.type: l
+task  t.type: c
+task  t.lc: 233067
+task  t.lowerbound: 0
+task  t.chunksize: 932748
+
+task  t.file.Path: D:\Cpp\LinesInTextFiles\build\TextFiles1\6.txt
+task  t.file.size: 1865497
+task  t.file.type: l
+task  t.type: c
+task  t.lc: 233106
+task  t.lowerbound: 932748
+task  t.chunksize: 0
+
+task  t.file.Path: D:\Cpp\LinesInTextFiles\build\TextFiles1\7.txt
+task  t.file.size: 1256192
+task  t.file.type: l
+task  t.type: c
+task  t.lc: 157161
+task  t.lowerbound: 0
+task  t.chunksize: 628096
+
+task  t.file.Path: D:\Cpp\LinesInTextFiles\build\TextFiles1\7.txt
+task  t.file.size: 1256192
+task  t.file.type: l
+task  t.type: c
+task  t.lc: 156787
+task  t.lowerbound: 628096
+task  t.chunksize: 0
+
+task  t.file.Path: D:\Cpp\LinesInTextFiles\build\TextFiles1\8.txt
+task  t.file.size: 547596
+task  t.file.type: s
+task  t.type: f
+task  t.lc: 136971
+task  t.lowerbound: 0
+task  t.chunksize: 0
+
+task  t.file.Path: D:\Cpp\LinesInTextFiles\build\TextFiles1\9.txt
+task  t.file.size: 2531594
+task  t.file.type: l
+task  t.type: c
+task  t.lc: 210754
+task  t.lowerbound: 0
+task  t.chunksize: 843864
+
+task  t.file.Path: D:\Cpp\LinesInTextFiles\build\TextFiles1\9.txt
+task  t.file.size: 2531594
+task  t.file.type: l
+task  t.type: c
+task  t.lc: 211068
+task  t.lowerbound: 843864
+task  t.chunksize: 843864
+
+task  t.file.Path: D:\Cpp\LinesInTextFiles\build\TextFiles1\9.txt
+task  t.file.size: 2531594
+task  t.file.type: l
+task  t.type: c
+task  t.lc: 210529
+task  t.lowerbound: 1687728
+task  t.chunksize: 0
+
+GlobalLineCounter: 3324373
+GlobalLineCounter : 3324373
+mmappartsftest : 2.69651
+mmappartstest : 3
+
